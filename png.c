@@ -1,12 +1,16 @@
 
 #include "return_codes.h"
-#include <include/igzip_lib.h>
 
+#if defined(ZLIB)
+#include <zlib.h>
+#elif defined(LIBDEFLATE)
 #include <libdeflate.h>
+#else
+#include <include/igzip_lib.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <zlib.h>
 struct image
 {
 	unsigned char *data;
