@@ -424,6 +424,16 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Wrong data in the file\n");
 		return ERROR_DATA_INVALID;
 	}
+	char str[16] = { buf.data[0], buf.data[1], buf.data[2], buf.data[3],
+					 buf.data[4], buf.data[5], buf.data[6], buf.data[7] };
+	char sign[16] = { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
+	if (strcmp(str, sign) != 0)
+	{
+		fclose(f);
+		free(buf.data);
+		fprintf(stderr, "Wrong png image signature\n");
+		return ERROR_DATA_INVALID;
+	}
 	int par[2] = { 0, 0 };
 	struct ihdrRet ans = ihdrChunk(f, &buf, par);
 	if (ans.returnCode != SUCCESS)
