@@ -7,9 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
-// #define ZLIB
-//  #define LIBDEFLATE
-//#define ISAL
 struct image
 {
 	unsigned char *data;
@@ -333,7 +330,8 @@ int convertRaw(int size, int type, int par[], unsigned char *out2, unsigned char
 	{
 		if (buf.type == 3)
 		{
-			if (out1[i] > buf.plteSize) {
+			if (out1[i] > buf.plteSize)
+			{
 				return -2;
 			}
 			for (int j = 0; j < 3; j++)
@@ -392,9 +390,10 @@ void checkFree(unsigned char *f)
 		free(f);
 	}
 }
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-	if (argc != 3 ) {
+	if (argc != 3)
+	{
 		fprintf(stderr, "Wrong number of arguments expected 2\n");
 		return ERROR_PARAMETER_INVALID;
 	}
@@ -487,10 +486,13 @@ int main(int argc, char* argv[])
 		free(out1);
 		free(out2);
 		checkFree(buf.plteData);
-		if (ret == -1) {
+		if (ret == -1)
+		{
 			fprintf(stderr, "Unsupported filter, only support filter None\n");
 			return ERROR_UNSUPPORTED;
-		} else if (ret == -2) {
+		}
+		else if (ret == -2)
+		{
 			fprintf(stderr, "Pallet index greater than its size\n");
 			return ERROR_DATA_INVALID;
 		}
