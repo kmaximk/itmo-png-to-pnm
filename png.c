@@ -1,6 +1,6 @@
 
 #include "return_codes.h"
-#include <isa-l/igzip_lib.h>
+#include <include/igzip_lib.h>
 
 #include <libdeflate.h>
 #include <stdio.h>
