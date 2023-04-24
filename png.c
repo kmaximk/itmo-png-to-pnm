@@ -5,7 +5,7 @@
 #elif defined(LIBDEFLATE)
 #	include <libdeflate.h>
 #elif defined(ISAL)
-#	include <include/igzip_lib.h>
+#	include <isa-l/igzip_lib.h>
 #else
 #	error "Wrong library, use ZLIB or LIBDEFLATE or ISAL"
 #endif
@@ -44,9 +44,9 @@ int inf(unsigned char *inputData, unsigned char *outputData, size_t inSize, size
 	{
 		return ERROR_OUT_OF_MEMORY;
 	}
-	else if (ret != Z_OK)
+	else if (ret != Z_STREAM_END)
 	{
-		return ERROR_DATA_INVALID
+		return ERROR_DATA_INVALID;
 	}
 	ret = inflateEnd(&infl);
 	if (ret != Z_OK)
