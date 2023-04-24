@@ -5,7 +5,7 @@
 #elif defined(LIBDEFLATE)
 #	include <libdeflate.h>
 #elif defined(ISAL)
-#	include <isa-l/igzip_lib.h>
+#	include <include/igzip_lib.h>
 #else
 #	error "Wrong library, use ZLIB or LIBDEFLATE or ISAL"
 #endif
