@@ -1,6 +1,4 @@
-#if defined(ZLIB) + defined(LIBDEFLATE) + defined(ISAL) > 1
-#	error "Only one library can be defined"
-#elif defined(ZLIB)
+#if defined(ZLIB)
 #	include <zlib.h>
 #elif defined(LIBDEFLATE)
 #	include <libdeflate.h>
@@ -89,8 +87,8 @@ struct ihdrRet
 };
 struct ihdrRet ihdrChunk(FILE *f, struct image *bu, int *pars)
 {
-	unsigned char *buf = (*bu).data;
-	struct ihdrRet ans = { 0, 0, 0 };
+	unsigned char buf[10];
+	struct ihdrRet ans = { 0, SUCCESS, 0 };
 	int ret = fread(buf, 1, 8, f);
 	if (ret != 8)
 	{
@@ -159,11 +157,13 @@ struct ihdrRet ihdrChunk(FILE *f, struct image *bu, int *pars)
 	if (buf[1] == 0 || buf[1] == 3)
 	{
 		ans.type = 1;
+		ans.returnCode = SUCCESS;
 		return ans;
 	}
 	else if (buf[1] == 2)
 	{
 		ans.type = 3;
+		ans.returnCode = SUCCESS;
 		return ans;
 	}
 	else
@@ -196,7 +196,7 @@ struct pair parsePNG(FILE *f, struct image *buf)
 		ret = fread(tmp, 1, 8, f);
 		if (ret != 8)
 		{
-			makeError(&ans, "Cannot read next chunk information\n", ERROR_DATA_INVALID);
+			makeError(&ans, "Reached end of the file\n", ERROR_DATA_INVALID);
 			return ans;
 		}
 		size_t size = 0;
@@ -250,6 +250,13 @@ struct pair parsePNG(FILE *f, struct image *buf)
 		}
 		else if (strcmp(name, "IEND") == 0)
 		{
+			ret = fread(tmp, 1, 5, f);
+			if (ret != 4)
+			{
+				free(temp);
+				makeError(&ans, "Wrong chunk after IEND\n", ERROR_DATA_INVALID);
+				return ans;
+			}
 			break;
 		}
 		else if (strcmp(name, "PLTE") == 0)
@@ -481,59 +488,42 @@ int main(int argc, char *argv[])
 		return ERROR_PARAMETER_INVALID;
 	}
 	int size = 8;
-	struct image buf = { .data = malloc(size * 8), 100 };
-	if (!buf.data)
-	{
-		fprintf(stderr, "Not enough memory\n");
-		return ERROR_OUT_OF_MEMORY;
-	}
+	unsigned char data[9];
 	FILE *f = fopen(argv[1], "rb");
 	if (!f)
 	{
-		free(buf.data);
 		fprintf(stderr, "Cannot open input file\n");
 		return ERROR_CANNOT_OPEN_FILE;
 	}
-	int ret = fread(buf.data, 1, size, f);
+	int ret = fread(data, 1, size, f);
 	if (ret != size)
 	{
 		fclose(f);
-		free(buf.data);
 		fprintf(stderr, "Wrong data in the file\n");
 		return ERROR_DATA_INVALID;
 	}
-	char str[16] = { buf.data[0], buf.data[1], buf.data[2], buf.data[3],
-					 buf.data[4], buf.data[5], buf.data[6], buf.data[7] };
+	char str[16] = { data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7] };
 	char sign[16] = { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
 	if (strcmp(str, sign) != 0)
 	{
 		fclose(f);
-		free(buf.data);
 		fprintf(stderr, "Wrong png image signature\n");
 		return ERROR_DATA_INVALID;
 	}
 	int par[2] = { 0, 0 };
+	struct image buf = { .data = NULL, 100 };
 	struct ihdrRet ans = ihdrChunk(f, &buf, par);
 	if (ans.returnCode != SUCCESS)
 	{
 		fclose(f);
-		free(buf.data);
 		fprintf(stderr, "%s", ans.text);
 		return ans.returnCode;
 	}
 	int type = ans.type;
 	size = par[0] * par[1];
-	free(buf.data);
 	buf.data = NULL;
 	buf.size = 0;
 	struct pair r = parsePNG(f, &buf);
-	if (buf.size == 0)
-	{
-		fclose(f);
-		checkFree(buf.plteData);
-		fprintf(stderr, "No IDAT chunks found\n");
-		return ERROR_DATA_INVALID;
-	}
 	if (r.returnCode != SUCCESS)
 	{
 		fclose(f);
@@ -542,7 +532,13 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%s", r.text);
 		return r.returnCode;
 	}
-	fclose(f);
+	if (buf.size == 0)
+	{
+		fclose(f);
+		checkFree(buf.plteData);
+		fprintf(stderr, "No IDAT chunks found\n");
+		return ERROR_DATA_INVALID;
+	}
 	unsigned char *out1 = malloc(sizeof(unsigned char) * size * type + par[1]);
 	if (!out1)
 	{
