@@ -539,6 +539,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "No IDAT chunks found\n");
 		return ERROR_DATA_INVALID;
 	}
+	fclose(f);
 	unsigned char *out1 = malloc(sizeof(unsigned char) * size * type + par[1]);
 	if (!out1)
 	{
